@@ -1,19 +1,18 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker, DeclarativeBase, registry
 
 SQLALCHEMY_DATABASE_URL = "mysql+mysqlconnector://user:password@localhost/fastapi"
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL
-)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, future=True)
+Session = sessionmaker(bind=engine, future=True)
 
-Base = declarative_base()
+
+mapper_registry = registry()
 
 
 # Dependency
 def get_db():
-    db = SessionLocal()
+    db = Session()
     try:
         yield db
     finally:

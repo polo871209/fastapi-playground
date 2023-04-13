@@ -1,11 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
 
-from app.database import model
-from app.database.database import engine
+from app.database.database import engine, mapper_registry
 from router import post, user, auth
 
-model.Base.metadata.create_all(bind=engine)
+mapper_registry.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.include_router(post.router)

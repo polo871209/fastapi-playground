@@ -22,7 +22,7 @@ def check_post_exist(query: Query, post_id: int) -> None:
 
 @router.post('/', response_model=schema.PostOut, status_code=status.HTTP_201_CREATED)
 def create_post(payload: schema.Post = Body(), db: Session = Depends(get_db),
-                user_id: int = Depends(oauth2.get_user)) -> schema.PostOut:
+                user: Type[model.User] = Depends(oauth2.get_user)):
     new_post = model.Post(**payload.dict())
     db.add(new_post)
     db.commit()
@@ -38,7 +38,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @router.get('/{post_id}', response_model=schema.PostOut)
-def get_post(post_id: int, db: Session = Depends(get_db)) -> Type[schema.PostOut]:
+def get_post(post_id: int, db: Session = Depends(get_db)):
     """get post by id"""
     post = db.query(model.Post).where(model.Post.id == post_id)
     check_post_exist(post, post_id)
@@ -48,7 +48,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)) -> Type[schema.PostOut
 
 @router.put('/{post_id}', response_model=schema.PostOut, status_code=status.HTTP_202_ACCEPTED)
 def update_post(post_id: int, payload: schema.Post = Body(), db: Session = Depends(get_db),
-                user_id: int = Depends(oauth2.get_user)) -> Type[schema.PostOut]:
+                user: Type[model.User] = Depends(oauth2.get_user)):
     """update post by id"""
     post = db.query(model.Post).where(model.Post.id == post_id)
     check_post_exist(post, post_id)
@@ -60,7 +60,7 @@ def update_post(post_id: int, payload: schema.Post = Body(), db: Session = Depen
 
 @router.delete('/{post_id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(post_id: int, db: Session = Depends(get_db),
-                user_id: int = Depends(oauth2.get_user)) -> None:
+                user: Type[model.User] = Depends(oauth2.get_user)) -> None:
     """delete post by id"""
     post = db.query(model.Post).where(model.Post.id == post_id)
     check_post_exist(post, post_id)

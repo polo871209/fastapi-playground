@@ -1,5 +1,3 @@
-from typing import Type
-
 from fastapi import APIRouter, Body, status, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.query import Query
@@ -21,7 +19,7 @@ def check_user_exist(query: Query, user_id: int) -> None:
 
 
 @router.post('/', response_model=schema.UserOut, status_code=status.HTTP_201_CREATED)
-def create_user(payload: schema.UseCreate = Body(), db: Session = Depends(get_db)) -> schema.UserOut:
+def create_user(payload: schema.UserCreate = Body(), db: Session = Depends(get_db)):
     payload.password = get_password_hash(payload.password)  # hash password
     new_user = model.User(**payload.dict())
     db.add(new_user)
@@ -32,7 +30,7 @@ def create_user(payload: schema.UseCreate = Body(), db: Session = Depends(get_db
 
 
 @router.get('/{user_id}', response_model=schema.UserOut)
-def get_user(user_id: int, db: Session = Depends(get_db)) -> Type[schema.UserOut]:
+def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(model.User).filter(model.User.id == user_id)
     check_user_exist(user, user_id)
 

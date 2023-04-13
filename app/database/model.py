@@ -1,24 +1,37 @@
-from sqlalchemy import Column, Integer, String, Boolean, text
+from datetime import datetime
+from typing import Annotated
+
+from sqlalchemy import text, String
+from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.sql import expression
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 
-from .database import Base
+from app.database.database import mapper_registry
+
+# unique type
+str_100 = Annotated[str, mapped_column(String(100))]
+unique_str_100 = Annotated[str_100, mapped_column(unique=True)]
+int_primary_key = Annotated[int, mapped_column(primary_key=True)]
+create_time = Annotated[datetime, mapped_column(TIMESTAMP(timezone=True), server_default=text('now()'))]
 
 
-class Post(Base):
+@mapper_registry.mapped
+class Post:
     __tablename__ = 'posts'
 
-    id = Column(Integer, primary_key=True, nullable=False)
-    title = Column(String(100), nullable=False)
-    content = Column(String(100), nullable=False)
-    publish = Column(Boolean, server_default=expression.true(), nullable=False)
-    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    id: Mapped[int_primary_key]
+    # user_id = Column(Integer, nullable=False)
+    title: Mapped[str_100]
+    content: Mapped[str_100]
+    publish: Mapped[bool] = mapped_column(server_default=expression.true())
+    created_at: Mapped[create_time]
 
 
-class User(Base):
+@mapper_registry.mapped
+class User:
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True, nullable=False)
-    email = Column(String(100), nullable=False, unique=True)
-    password = Column(String(200), nullable=False)
-    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    id: Mapped[int_primary_key]
+    email: Mapped[unique_str_100]
+    password: Mapped[str_100]
+    created_at: Mapped[create_time]
