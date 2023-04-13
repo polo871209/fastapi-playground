@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, status, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.query import Query
-
+from sqlalchemy.exc import DBAPIError
 import app.schemas as schema
 from app.database import model
 from app.database.database import get_db
@@ -20,11 +20,14 @@ def check_user_exist(query: Query, user_id: int) -> None:
 
 @router.post('/', response_model=schema.UserOut, status_code=status.HTTP_201_CREATED)
 def create_user(payload: schema.UserCreate = Body(), db: Session = Depends(get_db)):
-    payload.password = get_password_hash(payload.password)  # hash password
-    new_user = model.User(**payload.dict())
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    try:
+        payload.password = get_password_hash(payload.password)  # hash password
+        new_user = model.User(**payload.dict())
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    except DBAPIError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='email already exist')
 
     return new_user
 
