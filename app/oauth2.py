@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Annotated, Type
 
@@ -6,12 +7,12 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
 import app.schemas as schema
-from app.database import model
+from app.database import models
 from app.database.database import GetDb
 
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = os.environ['SECRET_KEY']
+ALGORITHM = os.environ['ALGORITHM']
+ACCESS_TOKEN_EXPIRE_MINUTES = os.environ['ACCESS_TOKEN_EXPIRE_MINUTES']
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login')
 
@@ -19,7 +20,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login')
 def create_access_token(data: dict):
     to_encode = data.copy()
 
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=float(ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -43,8 +44,8 @@ def get_user(db: GetDb, token: str = Depends(oauth2_scheme)):
                                           detail='could not validate credentials',
                                           headers={'WWW-Authenticate': 'Bearer'})
     token_data = verify_access_token(token, credentials_exception)
-    user = db.query(model.User).where(model.User.id == token_data.user_id).first()
+    user = db.query(models.User).where(models.User.id == token_data.user_id).first()
     return user
 
 
-UserLogin = Annotated[Type[model.User], Depends(get_user)]
+UserLogin = Annotated[Type[models.User], Depends(get_user)]

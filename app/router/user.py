@@ -3,7 +3,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm.query import Query
 
 import app.schemas as schema
-from app.database import model
+from app.database import models
 from app.database.database import GetDb
 from app.utils.hash import get_password_hash
 
@@ -22,7 +22,7 @@ def check_user_exist(query: Query, user_id: int) -> None:
 def create_user(db: GetDb, payload: schema.UserCreate = Body()):
     try:
         payload.password = get_password_hash(payload.password)  # hash password
-        new_user = model.User(**payload.dict())
+        new_user = models.User(**payload.dict())
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
@@ -34,7 +34,7 @@ def create_user(db: GetDb, payload: schema.UserCreate = Body()):
 
 @router.get('/{user_id}', response_model=schema.UserOut)
 def get_user(db: GetDb, user_id: int):
-    user = db.query(model.User).filter(model.User.id == user_id)
+    user = db.query(models.User).filter(models.User.id == user_id)
     check_user_exist(user, user_id)
 
     return user.first()

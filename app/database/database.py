@@ -1,10 +1,11 @@
+import os
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, registry
 
-SQLALCHEMY_DATABASE_URL = "mysql+mysqlconnector://user:password@localhost/fastapi"
+SQLALCHEMY_DATABASE_URL = os.environ['SQLALCHEMY_DATABASE_URL']
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, future=True)
 Session = sessionmaker(bind=engine, future=True)
