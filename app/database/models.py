@@ -38,3 +38,11 @@ class Post:
     created_at: Mapped[create_time]
 
     owner = relationship('User')
+
+
+@mapper_registry.mapped
+class Like:
+    __tablename__ = 'likes'
+
+    user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
+    post_id: Mapped[int_primary_key] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))
