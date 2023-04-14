@@ -1,13 +1,12 @@
-import os
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, registry
 
-SQLALCHEMY_DATABASE_URL = os.environ['SQLALCHEMY_DATABASE_URL']
+from app.config import env
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, future=True)
+engine = create_engine(env.SQLALCHEMY_DATABASE_URL, future=True)
 Session = sessionmaker(bind=engine, future=True)
 
 mapper_registry = registry()

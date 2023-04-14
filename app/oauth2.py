@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta
 from typing import Annotated, Type
 
@@ -9,10 +8,11 @@ from jose import jwt, JWTError
 import app.schemas as schema
 from app.database import models
 from app.database.database import GetDb
+from app.config import env
 
-SECRET_KEY = os.environ['SECRET_KEY']
-ALGORITHM = os.environ['ALGORITHM']
-ACCESS_TOKEN_EXPIRE_MINUTES = os.environ['ACCESS_TOKEN_EXPIRE_MINUTES']
+SECRET_KEY = env.SECRET_KEY
+ALGORITHM = env.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = env.ACCESS_TOKEN_EXPIRE_MINUTES
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login')
 
