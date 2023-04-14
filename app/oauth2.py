@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
+from typing import Annotated, Type
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from sqlalchemy.orm import Session
 
 import app.schemas as schema
 from app.database import model
-from app.database.database import get_db
+from app.database.database import GetDb
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
@@ -38,10 +38,13 @@ def verify_access_token(token: str, credentials_exception):
     return token_data
 
 
-def get_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_user(db: GetDb, token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                           detail='could not validate credentials',
                                           headers={'WWW-Authenticate': 'Bearer'})
     token_data = verify_access_token(token, credentials_exception)
     user = db.query(model.User).where(model.User.id == token_data.user_id).first()
     return user
+
+
+UserLogin = Annotated[Type[model.User], Depends(get_user)]

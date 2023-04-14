@@ -1,13 +1,12 @@
 from typing import Type, List
 
-from fastapi import APIRouter, Body, status, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Body, status, HTTPException
 from sqlalchemy.orm.query import Query
 
 import app.oauth2 as oauth2
 import app.schemas as schema
 from app.database import model
-from app.database.database import get_db
+from app.database.database import GetDb
 
 router = APIRouter(
     prefix='/post',
@@ -26,8 +25,7 @@ def check_user_own_post(user: Type[model.User], post: Query[Type[model.Post]]) -
 
 
 @router.post('/', response_model=schema.PostOut, status_code=status.HTTP_201_CREATED)
-def create_post(payload: schema.Post = Body(), db: Session = Depends(get_db),
-                user: Type[model.User] = Depends(oauth2.get_user)):
+def create_post(user: oauth2.UserLogin, db: GetDb, payload: schema.Post = Body()):
     new_post = model.Post(user_id=user.id, **payload.dict())
     db.add(new_post)
     db.commit()
@@ -37,13 +35,13 @@ def create_post(payload: schema.Post = Body(), db: Session = Depends(get_db),
 
 
 @router.get('/', response_model=List[schema.PostOut])
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(user: oauth2.UserLogin, db: GetDb):
     """get all posts"""
     return db.query(model.Post).all()
 
 
 @router.get('/{post_id}', response_model=schema.PostOut)
-def get_post(post_id: int, db: Session = Depends(get_db)):
+def get_post(user: oauth2.UserLogin, db: GetDb, post_id: int):
     """get post by id"""
     post = db.query(model.Post).where(model.Post.id == post_id)
     check_post_exist(post, post_id)
@@ -52,8 +50,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 
 
 @router.put('/{post_id}', response_model=schema.PostOut, status_code=status.HTTP_202_ACCEPTED)
-def update_post(post_id: int, payload: schema.Post = Body(), db: Session = Depends(get_db),
-                user: Type[model.User] = Depends(oauth2.get_user)):
+def update_post(user: oauth2.UserLogin, db: GetDb, post_id: int, payload: schema.Post = Body()):
     """update post by id"""
     post = db.query(model.Post).where(model.Post.id == post_id)
     check_post_exist(post, post_id)
@@ -65,8 +62,7 @@ def update_post(post_id: int, payload: schema.Post = Body(), db: Session = Depen
 
 
 @router.delete('/{post_id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(post_id: int, db: Session = Depends(get_db),
-                user: Type[model.User] = Depends(oauth2.get_user)) -> None:
+def delete_post(user: oauth2.UserLogin, db: GetDb, post_id: int, ) -> None:
     """delete post by id"""
     post = db.query(model.Post).where(model.Post.id == post_id)
     check_post_exist(post, post_id)
