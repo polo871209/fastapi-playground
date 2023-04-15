@@ -1,10 +1,10 @@
 # fastapi-playground
 
-##create table 
+## create table 
 ```
 alembic upgrade head
 ```
-##start app
+## start app
 ```
 pip install requirements.txt
 python main.py
