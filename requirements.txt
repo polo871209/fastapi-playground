@@ -1,3 +1,4 @@
+alembic==1.10.3
 anyio==3.6.2
 bcrypt==4.0.1
 cffi==1.15.1
@@ -10,6 +11,8 @@ fastapi==0.95.0
 h11==0.14.0
 httptools==0.5.0
 idna==3.4
+Mako==1.2.4
+MarkupSafe==2.1.2
 mysql-connector-python==8.0.32
 passlib==1.7.4
 protobuf==3.20.3
