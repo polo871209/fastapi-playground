@@ -22,12 +22,6 @@ class UserOut(UserBase):
 
 # Post
 class Post(BaseModel):
-    title: str
-    content: str
-    publish: Optional[bool] = True
-
-
-class PostOut(BaseModel):
     id: int
     title: str
     content: str
@@ -37,6 +31,17 @@ class PostOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class PostCreate(BaseModel):
+    title: str
+    content: str
+    publish: Optional[bool] = True
+
+
+class PostOut(BaseModel):
+    Post: Post
+    likes: int
 
 
 # login

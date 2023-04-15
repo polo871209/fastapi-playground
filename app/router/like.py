@@ -14,11 +14,9 @@ router = APIRouter(
 
 @router.post('/', status_code=status.HTTP_201_CREATED)
 def like_post(user: UserLogin, db: GetDb, payload: schemas.Like = Body()):
-    post = db.query(models.Post).where(models.Post.id == payload.post_id).first()
-    if not post:
+    if not db.query(models.Post).where(models.Post.id == payload.post_id).first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'post with id {payload.post_id} does not exist')
-
     if payload.dir == 1:
         try:
             db.add(models.Like(post_id=payload.post_id, user_id=user.id))
