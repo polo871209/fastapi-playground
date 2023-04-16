@@ -4,7 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.router import post, user, auth, like, comment
 
-app = FastAPI()
+app = FastAPI(
+    title='Social Media',
+    description='Develop by Polo',
+    version='0.0.0.0',
+    redoc_url=None,
+)
 
 # CORS settings
 origins = [
