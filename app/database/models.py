@@ -41,12 +41,13 @@ class Post:
     created_at: Mapped[create_time]
 
     owner: Mapped['User'] = relationship(back_populates='posts')
+    likes: Mapped[Optional[List['PostLike']]] = relationship()
     comments: Mapped[Optional[List['Comment']]] = relationship(back_populates='post')
 
 
 @mapper_registry.mapped
-class Like:
-    __tablename__ = 'likes'
+class PostLike:
+    __tablename__ = 'posts_likes'
 
     user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
     post_id: Mapped[int_primary_key] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))

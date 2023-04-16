@@ -35,6 +35,19 @@ class TokenData(BaseModel):
     user_id: Optional[str]
 
 
+# like
+class Like(BaseModel):
+    post_id: int
+    dir: conint(le=1)
+
+
+class LikeOut(BaseModel):
+    user_id: int
+
+    class Config:
+        orm_mode = True
+
+
 # Post
 class PostCommentOut(BaseModel):
     user_id: int
@@ -52,6 +65,7 @@ class Post(BaseModel):
     created_at: datetime
     owner: UserOut
     comments: List[PostCommentOut]
+    likes: List[LikeOut]
 
     class Config:
         orm_mode = True
@@ -72,12 +86,6 @@ class PostOut(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-# like
-class Like(BaseModel):
-    post_id: int
-    dir: conint(le=1)
 
 
 # comment

@@ -2,7 +2,6 @@ from typing import Type, Optional, List
 
 from fastapi import APIRouter, Body, status, HTTPException, Path
 from fastapi import Query as Parameters
-from sqlalchemy import func
 from sqlalchemy.orm.query import Query
 
 from app import schemas
@@ -36,24 +35,20 @@ def create_post(user: UserLogin, db: GetDb, payload: schemas.PostCreate = Body()
     return new_post
 
 
-@router.get('/all', response_model=List[schemas.PostOut])
-def get_posts(user: UserLogin, db: GetDb,
-              limit: Optional[int] = Parameters(default=10, description='maximum amount of posts'),
-              search: Optional[str] = Parameters(default='', description='search in title')):
+@router.get('/all', response_model=List[schemas.Post])
+def get_all_posts(user: UserLogin, db: GetDb,
+                  limit: Optional[int] = Parameters(default=10, description='maximum amount of posts'),
+                  search: Optional[str] = Parameters(default='', description='search in title')):
     """get all posts"""
-    result = db.query(models.Post, func.count(models.Like.post_id).label('likes')).outerjoin(models.Like) \
-        .group_by(models.Post.id).where(models.Post.title.contains(search)).limit(limit).all()
-    posts = [post._asdict() for post in result]
-    return posts
+    return db.query(models.Post).where(models.Post.title.contains(search)).limit(limit).all()
 
 
-@router.get('/{post_id}', response_model=schemas.PostOut)
+@router.get('/{post_id}', response_model=schemas.Post)
 def get_post(user: UserLogin, db: GetDb, post_id: int = Path()):
     """get post by id"""
-    post = db.query(models.Post, func.count(models.Like.post_id).label('likes')).outerjoin(models.Like) \
-        .group_by(models.Post.id).where(models.Post.id == post_id)
+    post = db.query(models.Post).where(models.Post.id == post_id)
     check_post_exist(post, post_id)
-    return post.first()._asdict()
+    return post.first()
 
 
 @router.put('/{post_id}', response_model=schemas.Post, status_code=status.HTTP_202_ACCEPTED)
