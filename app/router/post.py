@@ -1,6 +1,7 @@
 from typing import Type, Optional, List
 
-from fastapi import APIRouter, Body, status, HTTPException
+from fastapi import APIRouter, Body, status, HTTPException, Path
+from fastapi import Query as Parameters
 from sqlalchemy import func
 from sqlalchemy.orm.query import Query
 
@@ -36,12 +37,10 @@ def create_post(user: UserLogin, db: GetDb, payload: schemas.PostCreate = Body()
 
 
 @router.get('/all', response_model=List[schemas.PostOut])
-def get_posts(user: UserLogin, db: GetDb, limit: Optional[int] = 10, search: Optional[str] = ''):
-    """
-    get all posts
-    - **limit**: maximum amount of posts
-    - **search**: search in title
-    """
+def get_posts(user: UserLogin, db: GetDb,
+              limit: Optional[int] = Parameters(default=10, description='maximum amount of posts'),
+              search: Optional[str] = Parameters(default='', description='search in title')):
+    """get all posts"""
     result = db.query(models.Post, func.count(models.Like.post_id).label('likes')).outerjoin(models.Like) \
         .group_by(models.Post.id).where(models.Post.title.contains(search)).limit(limit).all()
     posts = [post._asdict() for post in result]
@@ -49,7 +48,7 @@ def get_posts(user: UserLogin, db: GetDb, limit: Optional[int] = 10, search: Opt
 
 
 @router.get('/{post_id}', response_model=schemas.PostOut)
-def get_post(user: UserLogin, db: GetDb, post_id: int):
+def get_post(user: UserLogin, db: GetDb, post_id: int = Path()):
     """get post by id"""
     post = db.query(models.Post, func.count(models.Like.post_id).label('likes')).outerjoin(models.Like) \
         .group_by(models.Post.id).where(models.Post.id == post_id)
@@ -58,7 +57,7 @@ def get_post(user: UserLogin, db: GetDb, post_id: int):
 
 
 @router.put('/{post_id}', response_model=schemas.Post, status_code=status.HTTP_202_ACCEPTED)
-def update_post(user: UserLogin, db: GetDb, post_id: int, payload: schemas.PostCreate = Body()):
+def update_post(user: UserLogin, db: GetDb, post_id: int = Path(), payload: schemas.PostCreate = Body()):
     """update post by id"""
     post = db.query(models.Post).where(models.Post.id == post_id)
     check_post_exist(post, post_id)
@@ -70,7 +69,7 @@ def update_post(user: UserLogin, db: GetDb, post_id: int, payload: schemas.PostC
 
 
 @router.delete('/{post_id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(user: UserLogin, db: GetDb, post_id: int) -> None:
+def delete_post(user: UserLogin, db: GetDb, post_id: int = Path()) -> None:
     """delete post by id"""
     post = db.query(models.Post).where(models.Post.id == post_id)
     check_post_exist(post, post_id)

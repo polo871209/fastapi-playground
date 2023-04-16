@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, status, HTTPException
+from fastapi import APIRouter, Body, status, HTTPException, Path
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm.query import Query
 
@@ -33,7 +33,7 @@ def create_user(db: GetDb, payload: schemas.UserCreate = Body()):
 
 
 @router.get('/{user_id}', response_model=schemas.UserOut)
-def get_user(db: GetDb, user_id: int):
+def get_user(db: GetDb, user_id: int = Path()):
     user = db.query(models.User).filter(models.User.id == user_id)
     check_user_exist(user, user_id)
 

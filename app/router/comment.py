@@ -1,6 +1,6 @@
 from typing import Type, List
 
-from fastapi import APIRouter, Body, status, HTTPException
+from fastapi import APIRouter, Body, status, HTTPException, Path
 from sqlalchemy.orm.query import Query
 
 from app import schemas
@@ -27,7 +27,7 @@ def check_user_own_comment(user: Type[models.User], comment: Query[Type[models.C
 
 
 @router.post('/{post_id}', response_model=schemas.CommentOut, status_code=status.HTTP_201_CREATED)
-def create_comment(user: UserLogin, db: GetDb, post_id: int, payload: schemas.CommentCreate = Body()):
+def create_comment(user: UserLogin, db: GetDb, post_id: int = Path(), payload: schemas.CommentCreate = Body()):
     post = db.query(models.Post).where(models.Post.id == post_id)
     check_post_exist(post, post_id)
     new_comment = models.Comment(user_id=user.id, post_id=post_id, **payload.dict())
@@ -39,7 +39,7 @@ def create_comment(user: UserLogin, db: GetDb, post_id: int, payload: schemas.Co
 
 
 @router.get('/{post_id}', response_model=List[schemas.CommentOut], status_code=status.HTTP_201_CREATED)
-def get_comment(user: UserLogin, db: GetDb, post_id: int):
+def get_comment(user: UserLogin, db: GetDb, post_id: int = Path()):
     """get your own comments"""
     comments = db.query(models.Comment) \
         .where(models.Comment.post_id == post_id, models.Comment.user_id == user.id).all()
@@ -50,7 +50,7 @@ def get_comment(user: UserLogin, db: GetDb, post_id: int):
 
 
 @router.put('/{comment_id}', response_model=schemas.CommentOut, status_code=status.HTTP_201_CREATED)
-def update_comment(user: UserLogin, db: GetDb, comment_id: int, payload: schemas.CommentCreate = Body()):
+def update_comment(user: UserLogin, db: GetDb, comment_id: int = Path(), payload: schemas.CommentCreate = Body()):
     comment = db.query(models.Comment).where(models.Comment.id == comment_id)
     check_comment_exist(comment, comment_id)
     check_user_own_comment(user, comment)
@@ -61,7 +61,7 @@ def update_comment(user: UserLogin, db: GetDb, comment_id: int, payload: schemas
 
 
 @router.delete('/{comment_id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(user: UserLogin, db: GetDb, comment_id: int) -> None:
+def delete_post(user: UserLogin, db: GetDb, comment_id: int = Path()) -> None:
     comment = db.query(models.Comment).where(models.Comment.id == comment_id)
     check_comment_exist(comment, comment_id)
     check_user_own_comment(user, comment)
