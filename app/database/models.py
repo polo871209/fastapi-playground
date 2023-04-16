@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, List, Optional
 
 from sqlalchemy import text, String, ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped, relationship
@@ -25,6 +25,9 @@ class User:
     password: Mapped[str_100]
     created_at: Mapped[create_time]
 
+    posts: Mapped['Post'] = relationship(back_populates='owner')
+    comments: Mapped['Comment'] = relationship(back_populates='owner')
+
 
 @mapper_registry.mapped
 class Post:
@@ -37,7 +40,8 @@ class Post:
     publish: Mapped[bool_default_true]
     created_at: Mapped[create_time]
 
-    owner = relationship('User')
+    owner: Mapped['User'] = relationship(back_populates='posts')
+    comments: Mapped[Optional[List['Comment']]] = relationship(back_populates='post')
 
 
 @mapper_registry.mapped
@@ -46,3 +50,16 @@ class Like:
 
     user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
     post_id: Mapped[int_primary_key] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))
+
+
+@mapper_registry.mapped
+class Comment:
+    __tablename__ = 'comments'
+
+    id: Mapped[int_primary_key]
+    comment: Mapped[str_100]
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
+    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))
+
+    owner: Mapped['User'] = relationship(back_populates='comments')
+    post: Mapped['Post'] = relationship(back_populates='comments')

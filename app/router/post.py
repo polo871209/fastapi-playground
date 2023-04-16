@@ -25,7 +25,7 @@ def check_user_own_post(user: Type[models.User], post: Query[Type[models.Post]])
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='not authorize to perform requested action')
 
 
-@router.post('/', response_model=schemas.PostCreate, status_code=status.HTTP_201_CREATED)
+@router.post('/', response_model=schemas.Post, status_code=status.HTTP_201_CREATED)
 def create_post(user: UserLogin, db: GetDb, payload: schemas.PostCreate = Body()):
     new_post = models.Post(user_id=user.id, **payload.dict())
     db.add(new_post)
@@ -35,7 +35,7 @@ def create_post(user: UserLogin, db: GetDb, payload: schemas.PostCreate = Body()
     return new_post
 
 
-@router.get('/', response_model=List[schemas.PostOut])
+@router.get('/all', response_model=List[schemas.PostOut])
 def get_posts(user: UserLogin, db: GetDb, limit: Optional[int] = 10, search: Optional[str] = ''):
     """
     get all posts
@@ -70,7 +70,7 @@ def update_post(user: UserLogin, db: GetDb, post_id: int, payload: schemas.PostC
 
 
 @router.delete('/{post_id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(user: UserLogin, db: GetDb, post_id: int, ) -> None:
+def delete_post(user: UserLogin, db: GetDb, post_id: int) -> None:
     """delete post by id"""
     post = db.query(models.Post).where(models.Post.id == post_id)
     check_post_exist(post, post_id)
