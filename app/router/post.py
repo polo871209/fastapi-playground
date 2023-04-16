@@ -25,7 +25,7 @@ def check_user_own_post(user: Type[models.User], post: Query[Type[models.Post]])
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='not authorize to perform requested action')
 
 
-@router.post('/', response_model=schemas.Post, status_code=status.HTTP_201_CREATED)
+@router.post('/', response_model=schemas.PostOut, status_code=status.HTTP_201_CREATED)
 def create_post(user: UserLogin, db: GetDb, payload: schemas.PostCreate = Body()):
     new_post = models.Post(user_id=user.id, **payload.dict())
     db.add(new_post)
@@ -35,7 +35,7 @@ def create_post(user: UserLogin, db: GetDb, payload: schemas.PostCreate = Body()
     return new_post
 
 
-@router.get('/all', response_model=List[schemas.Post])
+@router.get('/all', response_model=List[schemas.PostOut])
 def get_all_posts(user: UserLogin, db: GetDb,
                   limit: Optional[int] = Parameters(default=10, description='maximum amount of posts'),
                   search: Optional[str] = Parameters(default='', description='search in title')):
@@ -43,7 +43,7 @@ def get_all_posts(user: UserLogin, db: GetDb,
     return db.query(models.Post).where(models.Post.title.contains(search)).limit(limit).all()
 
 
-@router.get('/{post_id}', response_model=schemas.Post)
+@router.get('/{post_id}', response_model=schemas.PostOut)
 def get_post(user: UserLogin, db: GetDb, post_id: int = Path()):
     """get post by id"""
     post = db.query(models.Post).where(models.Post.id == post_id)
@@ -51,7 +51,7 @@ def get_post(user: UserLogin, db: GetDb, post_id: int = Path()):
     return post.first()
 
 
-@router.put('/{post_id}', response_model=schemas.Post, status_code=status.HTTP_202_ACCEPTED)
+@router.put('/{post_id}', response_model=schemas.PostOut, status_code=status.HTTP_202_ACCEPTED)
 def update_post(user: UserLogin, db: GetDb, post_id: int = Path(), payload: schemas.PostCreate = Body()):
     """update post by id"""
     post = db.query(models.Post).where(models.Post.id == post_id)

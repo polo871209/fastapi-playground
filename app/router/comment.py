@@ -1,6 +1,7 @@
 from typing import Type, List
 
 from fastapi import APIRouter, Body, status, HTTPException, Path
+from fastapi import Query as Parameters
 from sqlalchemy.orm.query import Query
 
 from app import schemas
@@ -26,8 +27,8 @@ def check_user_own_comment(user: Type[models.User], comment: Query[Type[models.C
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='not authorize to perform requested action')
 
 
-@router.post('/{post_id}', response_model=schemas.CommentOut, status_code=status.HTTP_201_CREATED)
-def create_comment(user: UserLogin, db: GetDb, post_id: int = Path(), payload: schemas.CommentCreate = Body()):
+@router.post('/', response_model=schemas.CommentOut, status_code=status.HTTP_201_CREATED)
+def create_comment(user: UserLogin, db: GetDb, post_id: int = Parameters(), payload: schemas.CommentCreate = Body()):
     post = db.query(models.Post).where(models.Post.id == post_id)
     check_post_exist(post, post_id)
     new_comment = models.Comment(user_id=user.id, post_id=post_id, **payload.dict())
@@ -38,8 +39,8 @@ def create_comment(user: UserLogin, db: GetDb, post_id: int = Path(), payload: s
     return new_comment
 
 
-@router.get('/{post_id}', response_model=List[schemas.CommentOut], status_code=status.HTTP_201_CREATED)
-def get_comment(user: UserLogin, db: GetDb, post_id: int = Path()):
+@router.get('/', response_model=List[schemas.CommentOut], status_code=status.HTTP_201_CREATED)
+def get_comment(user: UserLogin, db: GetDb, post_id: int = Parameters()):
     """get your own comments"""
     comments = db.query(models.Comment) \
         .where(models.Comment.post_id == post_id, models.Comment.user_id == user.id).all()

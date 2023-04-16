@@ -57,7 +57,7 @@ class PostCommentOut(BaseModel):
         orm_mode = True
 
 
-class Post(BaseModel):
+class PostOut(BaseModel):
     id: int
     title: str
     content: str
@@ -75,17 +75,6 @@ class PostCreate(BaseModel):
     title: str
     content: str
     publish: Optional[bool] = True
-
-    class Config:
-        orm_mode = True
-
-
-class PostOut(BaseModel):
-    Post: Post
-    likes: int
-
-    class Config:
-        orm_mode = True
 
 
 # comment
