@@ -5,7 +5,12 @@
 alembic upgrade head
 ```
 ## start app
+docker build 
 ```
 pip install -r requirements.txt
 python main.py
 ```
+### Naming rules
+- sqlalchemy models: Db${Dbname}
+- response pydantic Base: ${Base}Out
+- create pydantic Base: ${Base}Create

@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.router import post, user, auth, like, comment
+from src.router import post, user, auth, like, comment
 
 app = FastAPI(
     title='Social Media',
@@ -32,4 +32,4 @@ app.include_router(like.router)
 app.include_router(comment.router)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:src", host="0.0.0.0", port=8000, reload=True)

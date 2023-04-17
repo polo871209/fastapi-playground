@@ -4,10 +4,10 @@ from fastapi import APIRouter, Body, status, HTTPException, Path
 from fastapi import Query as Parameters
 from sqlalchemy.orm.query import Query
 
-from app import schemas
-from app.database import models
-from app.database.database import GetDb
-from app.oauth2 import UserLogin
+from src.database.database import GetDb
+from src.database.models import DbPost, DbUser
+from src.oauth2 import UserLogin
+from src.schemas import PostCreate, PostOut
 
 router = APIRouter(
     prefix='/post',
@@ -20,14 +20,14 @@ def check_post_exist(query: Query, post_id: int) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'post with id {post_id} does not exist')
 
 
-def check_user_own_post(user: Type[models.User], post: Query[Type[models.Post]]) -> None:
+def check_user_own_post(user: Type[DbUser], post: Query[Type[DbPost]]) -> None:
     if user.id != post.first().user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='not authorize to perform requested action')
 
 
-@router.post('/', response_model=schemas.PostOut, status_code=status.HTTP_201_CREATED)
-def create_post(user: UserLogin, db: GetDb, payload: schemas.PostCreate = Body()):
-    new_post = models.Post(user_id=user.id, **payload.dict())
+@router.post('/', response_model=PostOut, status_code=status.HTTP_201_CREATED)
+def create_post(user: UserLogin, db: GetDb, payload: PostCreate = Body()):
+    new_post = DbPost(user_id=user.id, **payload.dict())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -35,26 +35,26 @@ def create_post(user: UserLogin, db: GetDb, payload: schemas.PostCreate = Body()
     return new_post
 
 
-@router.get('/all', response_model=List[schemas.PostOut])
+@router.get('/all', response_model=List[PostOut])
 def get_all_posts(user: UserLogin, db: GetDb,
                   limit: Optional[int] = Parameters(default=10, description='maximum amount of posts'),
                   search: Optional[str] = Parameters(default='', description='search in title')):
     """get all posts"""
-    return db.query(models.Post).where(models.Post.title.contains(search)).limit(limit).all()
+    return db.query(DbPost).where(DbPost.title.contains(search)).limit(limit).all()
 
 
-@router.get('/{post_id}', response_model=schemas.PostOut)
+@router.get('/{post_id}', response_model=PostOut)
 def get_post(user: UserLogin, db: GetDb, post_id: int = Path()):
     """get post by id"""
-    post = db.query(models.Post).where(models.Post.id == post_id)
+    post = db.query(DbPost).where(DbPost.id == post_id)
     check_post_exist(post, post_id)
     return post.first()
 
 
-@router.put('/{post_id}', response_model=schemas.PostOut, status_code=status.HTTP_202_ACCEPTED)
-def update_post(user: UserLogin, db: GetDb, post_id: int = Path(), payload: schemas.PostCreate = Body()):
+@router.put('/{post_id}', response_model=PostOut, status_code=status.HTTP_202_ACCEPTED)
+def update_post(user: UserLogin, db: GetDb, post_id: int = Path(), payload: PostCreate = Body()):
     """update post by id"""
-    post = db.query(models.Post).where(models.Post.id == post_id)
+    post = db.query(DbPost).where(DbPost.id == post_id)
     check_post_exist(post, post_id)
     check_user_own_post(user, post)
     post.update(payload.dict(), synchronize_session=False)
@@ -66,7 +66,7 @@ def update_post(user: UserLogin, db: GetDb, post_id: int = Path(), payload: sche
 @router.delete('/{post_id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(user: UserLogin, db: GetDb, post_id: int = Path()) -> None:
     """delete post by id"""
-    post = db.query(models.Post).where(models.Post.id == post_id)
+    post = db.query(DbPost).where(DbPost.id == post_id)
     check_post_exist(post, post_id)
     check_user_own_post(user, post)
     post.delete(synchronize_session=False)

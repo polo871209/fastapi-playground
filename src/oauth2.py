@@ -5,10 +5,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
-import app.schemas as schema
-from app.database import models
-from app.database.database import GetDb
-from app.config import env
+import src.schemas as schema
+from src.database import models
+from src.database.database import GetDb
+from src.config import env
 
 SECRET_KEY = env.SECRET_KEY
 ALGORITHM = env.ALGORITHM
@@ -44,8 +44,8 @@ def get_user(db: GetDb, token: str = Depends(oauth2_scheme)):
                                           detail='could not validate credentials',
                                           headers={'WWW-Authenticate': 'Bearer'})
     token_data = verify_access_token(token, credentials_exception)
-    user = db.query(models.User).where(models.User.id == token_data.user_id).first()
+    user = db.query(models.DbUser).where(models.DbUser.id == token_data.user_id).first()
     return user
 
 
-UserLogin = Annotated[Type[models.User], Depends(get_user)]
+UserLogin = Annotated[Type[models.DbUser], Depends(get_user)]

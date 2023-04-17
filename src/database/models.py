@@ -6,7 +6,7 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.sql import expression
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 
-from app.database.database import mapper_registry
+from src.database.database import mapper_registry
 
 # unique type
 str_100 = Annotated[str, mapped_column(String(100))]
@@ -17,7 +17,7 @@ create_time = Annotated[datetime, mapped_column(TIMESTAMP(timezone=True), server
 
 
 @mapper_registry.mapped
-class User:
+class DbUser:
     __tablename__ = 'users'
 
     id: Mapped[int_primary_key]
@@ -25,12 +25,12 @@ class User:
     password: Mapped[str_100]
     created_at: Mapped[create_time]
 
-    posts: Mapped['Post'] = relationship(back_populates='owner')
-    comments: Mapped['Comment'] = relationship(back_populates='owner')
+    posts: Mapped['DbPost'] = relationship(back_populates='owner')
+    comments: Mapped['DbComment'] = relationship(back_populates='owner')
 
 
 @mapper_registry.mapped
-class Post:
+class DbPost:
     __tablename__ = 'posts'
 
     id: Mapped[int_primary_key]
@@ -40,13 +40,13 @@ class Post:
     publish: Mapped[bool_default_true]
     created_at: Mapped[create_time]
 
-    owner: Mapped['User'] = relationship(back_populates='posts')
-    likes: Mapped[Optional[List['PostLike']]] = relationship()
-    comments: Mapped[Optional[List['Comment']]] = relationship(back_populates='post')
+    owner: Mapped['DbUser'] = relationship(back_populates='posts')
+    likes: Mapped[Optional[List['DbPostLike']]] = relationship()
+    comments: Mapped[Optional[List['DbComment']]] = relationship(back_populates='post')
 
 
 @mapper_registry.mapped
-class PostLike:
+class DbPostLike:
     __tablename__ = 'posts_likes'
 
     user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
@@ -54,7 +54,7 @@ class PostLike:
 
 
 @mapper_registry.mapped
-class Comment:
+class DbComment:
     __tablename__ = 'comments'
 
     id: Mapped[int_primary_key]
@@ -62,5 +62,5 @@ class Comment:
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
     post_id: Mapped[int] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))
 
-    owner: Mapped['User'] = relationship(back_populates='comments')
-    post: Mapped['Post'] = relationship(back_populates='comments')
+    owner: Mapped['DbUser'] = relationship(back_populates='comments')
+    post: Mapped['DbPost'] = relationship(back_populates='comments')
