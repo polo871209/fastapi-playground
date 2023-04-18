@@ -8,7 +8,7 @@ alembic upgrade head
 docker build 
 ```
 pip install -r requirements.txt
-python main.py
+uvicorn src.main:app --host 0.0.0.0 --port 8000 
 ```
 ### Naming rules
 - sqlalchemy models: Db${Dbname}
