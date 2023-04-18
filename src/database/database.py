@@ -4,7 +4,7 @@ from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, registry
 
-from src.config import env
+from ..config import env
 
 engine = create_engine(env.SQLALCHEMY_DATABASE_URL, future=True)
 Session = sessionmaker(bind=engine, future=True)

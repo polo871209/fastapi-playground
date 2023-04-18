@@ -3,11 +3,11 @@ from typing import Type
 from fastapi import APIRouter, status, Depends, HTTPException
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 
-from src.database.database import GetDb
-from src.database.models import DbUser
-from src.oauth2 import create_access_token
-from src.schemas import TokenOut
-from src.utils.hash import verify_password
+from ..database.database import GetDb
+from ..database.models import DbUser
+from ..oauth2 import create_access_token
+from ..schemas import TokenOut
+from ..utils.hash import verify_password
 
 router = APIRouter(
     prefix='/login',

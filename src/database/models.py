@@ -6,7 +6,7 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.sql import expression
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 
-from src.database.database import mapper_registry
+from ..database.database import mapper_registry
 
 # unique type
 str_100 = Annotated[str, mapped_column(String(100))]

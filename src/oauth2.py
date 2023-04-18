@@ -5,10 +5,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
-import src.schemas as schema
-from src.database import models
-from src.database.database import GetDb
-from src.config import env
+from .config import env
+from .database import models
+from .database.database import GetDb
+from .schemas import TokenData
 
 SECRET_KEY = env.SECRET_KEY
 ALGORITHM = env.ALGORITHM
@@ -32,7 +32,7 @@ def verify_access_token(token: str, credentials_exception):
         user_id: str = payload.get('user_id')
         if not user_id:
             raise credentials_exception
-        token_data = schema.TokenData(user_id=user_id)
+        token_data = TokenData(user_id=user_id)
     except JWTError:
         raise credentials_exception
 

@@ -4,11 +4,11 @@ from fastapi import APIRouter, Body, status, HTTPException, Path
 from fastapi import Query as Parameters
 from sqlalchemy.orm.query import Query
 
-from src.database.database import GetDb
-from src.database.models import DbPost, DbComment, DbUser
-from src.oauth2 import UserLogin
-from src.router.post import check_post_exist
-from src.schemas import CommentOut, CommentCreate
+from ..database.database import GetDb
+from ..database.models import DbPost, DbComment, DbUser
+from ..oauth2 import UserLogin
+from ..router.post import check_post_exist
+from ..schemas import CommentOut, CommentCreate
 
 router = APIRouter(
     prefix='/comment',

@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Body, status, HTTPException
 from sqlalchemy.exc import DBAPIError
 
-from src.database.database import GetDb
-from src.database.models import DbPostLike, DbPost
-from src.oauth2 import UserLogin
-from src.schemas import Like
+from ..database.database import GetDb
+from ..database.models import DbPostLike, DbPost
+from ..oauth2 import UserLogin
+from ..schemas import Like
 
 router = APIRouter(
     prefix='/like',

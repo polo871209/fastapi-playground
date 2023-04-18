@@ -2,11 +2,11 @@ from fastapi import APIRouter, Body, status, HTTPException
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm.query import Query
 
-from src.database.database import GetDb
-from src.database.models import DbUser
-from src.oauth2 import UserLogin
-from src.schemas import UserOut, UserCreate
-from src.utils.hash import get_password_hash
+from ..database.database import GetDb
+from ..database.models import DbUser
+from ..oauth2 import UserLogin
+from ..schemas import UserOut, UserCreate
+from ..utils.hash import get_password_hash
 
 router = APIRouter(
     prefix='/user',
