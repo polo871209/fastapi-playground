@@ -1,0 +1,32 @@
+version: '3.3'
+services:
+  db:
+    container_name: mysql
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'fastapi'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'password'
+    ports:
+      # <local> : <container>
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+      - my-db:/var/lib/mysql
+  ap:
+    depends_on:
+      - db
+    container_name: fastapi
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    ports:
+      - '8000:8000'
+    expose:
+      - '8000'
+# Names our volume
+volumes:
+  my-db:
