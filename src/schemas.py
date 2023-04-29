@@ -88,3 +88,11 @@ class CommentOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+# file
+class FileOut(BaseModel):
+    file_name: str
+
+    class Config:
+        orm_mode = True

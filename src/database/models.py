@@ -64,3 +64,12 @@ class DbComment:
 
     owner: Mapped['DbUser'] = relationship(back_populates='comments')
     post: Mapped['DbPost'] = relationship(back_populates='comments')
+
+
+@mapper_registry.mapped
+class DbUserFile:
+    __tablename__ = 'user_file'
+
+    user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
+    file_name: Mapped[str_100] = mapped_column(primary_key=True)
+    s3_key_name: Mapped[str_100]
