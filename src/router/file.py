@@ -48,6 +48,7 @@ def list_all_files(user: UserLogin, db: GetDb):
 
 @router.get('/{file_name}')
 def get_file(user: UserLogin, db: GetDb, file_name: str):
+    """temporary link for file download"""
     file = db.query(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file_name)
     check_file_exist(file, file_name)
     return create_presigned_url(file_name)

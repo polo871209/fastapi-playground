@@ -1,7 +1,6 @@
 from typing import Type, Optional, List
 
-from fastapi import APIRouter, Body, status, HTTPException, Path
-from fastapi import Query as Parameters
+from fastapi import APIRouter, Body, status, HTTPException, Path, Query as Parameters
 from sqlalchemy.orm.query import Query
 
 from ..database.database import GetDb
@@ -31,16 +30,15 @@ def create_post(user: UserLogin, db: GetDb, payload: PostCreate = Body()):
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
-
     return new_post
 
 
 @router.get('/all', response_model=List[PostOut])
-def get_all_posts(user: UserLogin, db: GetDb,
-                  limit: Optional[int] = Parameters(default=10, description='maximum amount of posts'),
-                  search: Optional[str] = Parameters(default='', description='search in title')):
+async def get_all_posts(user: UserLogin, db: GetDb,
+                        limit: Optional[int] = Parameters(default=10, description='maximum amount of posts'),
+                        search: Optional[str] = Parameters(default='', description='search in title')):
     """get all posts"""
-    return db.query(DbPost).where(DbPost.title.contains(search)).limit(limit).all()
+    return await db.query(DbPost).where(DbPost.title.contains(search)).limit(limit).all()
 
 
 @router.get('/{post_id}', response_model=PostOut)
