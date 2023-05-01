@@ -34,11 +34,11 @@ def create_post(user: UserLogin, db: GetDb, payload: PostCreate = Body()):
 
 
 @router.get('/all', response_model=List[PostOut])
-async def get_all_posts(user: UserLogin, db: GetDb,
-                        limit: Optional[int] = Parameters(default=10, description='maximum amount of posts'),
-                        search: Optional[str] = Parameters(default='', description='search in title')):
+def get_all_posts(user: UserLogin, db: GetDb,
+                  limit: Optional[int] = Parameters(default=10, description='maximum amount of posts'),
+                  search: Optional[str] = Parameters(default='', description='search in title')):
     """get all posts"""
-    return await db.query(DbPost).where(DbPost.title.contains(search)).limit(limit).all()
+    return db.query(DbPost).where(DbPost.title.contains(search)).limit(limit).all()
 
 
 @router.get('/{post_id}', response_model=PostOut)

@@ -1,7 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from.database.database import database
-from .database import database
 from .log import logger
 from .router import post, user, auth, like, comment, file
 
@@ -24,17 +22,6 @@ app.add_middleware(
     allow_methods=['POST', 'GET', 'PUT', 'DELETE'],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-async def startup():
-    await database.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
-
 
 # add routers
 app.include_router(auth.router)
