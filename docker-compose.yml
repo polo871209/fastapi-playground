@@ -22,10 +22,14 @@ services:
     restart: always
     environment:
       PORT: ${PORT}
+      PYTHONBUFFERED: 1
+      WEB_CONCURRENCY: 4
+      WORKERS_PER_CORE: 2
+      GUNICORN_CMD_ARGS: "--preload --timeout 30 --keep-alive 2 --log-level info"
     ports:
-      - '8000:8000'
+      - '${PORT}:${PORT}'
     expose:
-      - '8000'
+      - '${PORT}'
 # Names our volume
 volumes:
   my-db:
