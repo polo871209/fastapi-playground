@@ -4,11 +4,15 @@
 ```
 alembic upgrade head
 ```
-## start app
-docker build 
+## start app 
+
 ```
+# development
 pip install -r requirements.txt
-uvicorn src.main:app --host 0.0.0.0 --port 8000 
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+# production
+docker-compose up -d 
 ```
 ### Naming rules
 - sqlalchemy models: Db${Dbname}
