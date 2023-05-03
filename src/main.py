@@ -31,4 +31,4 @@ app.include_router(like.router)
 app.include_router(file.router)
 app.include_router(comment.router)
 
-logger.info('application start successfully')
+# logger.info('start logging')
