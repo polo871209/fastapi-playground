@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from .log import logger
 from .router import post, user, auth, like, comment, file
 
@@ -31,4 +32,4 @@ app.include_router(like.router)
 app.include_router(file.router)
 app.include_router(comment.router)
 
-# logger.info('start logging')
+logger.info('start logging')

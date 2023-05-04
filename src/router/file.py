@@ -31,14 +31,16 @@ def upload_file(user: UserLogin, db: GetDb, file: UploadFile = File()):
     db_file = db.query(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file.filename).first()
     if not db_file:
         key = str(uuid4())
-        if upload_fileobj(file.file, key) == 'success':
+        if upload_fileobj(file.file, key):
             new_file = DbUserFile(user_id=user.id, file_name=file.filename, s3_key_name=key)
             db.add(new_file)
             db.commit()
             db.refresh(new_file)
             return new_file
-    upload_fileobj(file.file, db_file.s3_key_name)
-    return {'file_name': file.filename}
+    elif upload_fileobj(file.file, db_file.s3_key_name):
+        return {'file_name': file.filename}
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='please try again')
 
 
 @router.get('/all', response_model=List[FileOut])
@@ -51,13 +53,18 @@ def get_file(user: UserLogin, db: GetDb, file_name: str):
     """temporary link for file download"""
     file = db.query(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file_name)
     check_file_exist(file, file_name)
-    return create_presigned_url(file_name)
+    if response := create_presigned_url(file.first().s3_key_name):
+        return response
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='please try again')
 
 
 @router.delete('/{filename}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_file(user: UserLogin, db: GetDb, file_name: str):
     file = db.query(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file_name)
     check_file_exist(file, file_name)
-    file.delete(synchronize_session=False)
-    db.commit()
-    delete_object(file_name)
+    if delete_object(file.first().s3_key_name):
+        file.delete(synchronize_session=False)
+        db.commit()
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='please try again')
