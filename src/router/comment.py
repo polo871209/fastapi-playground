@@ -4,8 +4,8 @@ from fastapi import APIRouter, Body, status, HTTPException, Path
 from fastapi import Query as Parameters
 from sqlalchemy.orm.query import Query
 
-from ..database.database import GetDb
-from ..database.models import DbPost, DbComment, DbUser
+from src.db import GetDb
+from src.models import DbPost, DbComment, DbUser
 from ..oauth2 import UserLogin
 from ..router.post import check_post_exist
 from ..schemas import CommentOut, CommentCreate

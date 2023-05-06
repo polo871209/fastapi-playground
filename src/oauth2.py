@@ -6,8 +6,8 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
 from .config import env
-from .database import models
-from .database.database import GetDb
+from . import models
+from src.db import GetDb
 from .schemas import TokenData
 
 SECRET_KEY = env.SECRET_KEY

@@ -3,8 +3,8 @@ from typing import Type, Optional, List
 from fastapi import APIRouter, Body, status, HTTPException, Path, Query as Parameters
 from sqlalchemy.orm.query import Query
 
-from ..database.database import GetDb
-from ..database.models import DbPost, DbUser
+from src.db import GetDb
+from src.models import DbPost, DbUser
 from ..oauth2 import UserLogin
 from ..schemas import PostCreate, PostOut
 

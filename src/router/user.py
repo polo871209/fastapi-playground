@@ -2,8 +2,8 @@ from fastapi import APIRouter, Body, status, HTTPException
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm.query import Query
 
-from ..database.database import GetDb
-from ..database.models import DbUser
+from src.db import GetDb
+from src.models import DbUser
 from ..oauth2 import UserLogin
 from ..schemas import UserOut, UserCreate
 from ..utils.hash import get_password_hash

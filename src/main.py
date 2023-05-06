@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .log import logger
-from .router import post, user, auth, like, comment, file
+from .router import main
 
 app = FastAPI(
     title='Social Media',
@@ -25,11 +25,17 @@ app.add_middleware(
 )
 
 # add routers
-app.include_router(auth.router)
-app.include_router(user.router)
-app.include_router(post.router)
-app.include_router(like.router)
-app.include_router(file.router)
-app.include_router(comment.router)
+app.include_router(main.router)
+
+
+@app.get('')
+def home():
+    return {'message': 'success'}
+
+
+@app.get('/health')
+def health():
+    return {'status': 'healthy'}
+
 
 logger.info('start logging')

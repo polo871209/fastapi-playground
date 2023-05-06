@@ -4,7 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from src.config import env
-from src.database.models import mapper_registry
+from src.models import mapper_registry
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

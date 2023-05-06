@@ -3,8 +3,8 @@ from typing import Type
 from fastapi import APIRouter, status, Depends, HTTPException
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 
-from ..database.database import GetDb
-from ..database.models import DbUser
+from src.db import GetDb
+from src.models import DbUser
 from ..oauth2 import create_access_token
 from ..schemas import TokenOut
 from ..utils.hash import verify_password

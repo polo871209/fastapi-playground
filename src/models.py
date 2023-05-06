@@ -2,11 +2,11 @@ from datetime import datetime
 from typing import Annotated, List, Optional
 
 from sqlalchemy import text, String, ForeignKey
-from sqlalchemy.orm import mapped_column, Mapped, relationship
+from sqlalchemy.orm import mapped_column, Mapped, relationship, registry
 from sqlalchemy.sql import expression
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 
-from ..database.database import mapper_registry
+mapper_registry = registry()
 
 # unique type
 str_100 = Annotated[str, mapped_column(String(100))]

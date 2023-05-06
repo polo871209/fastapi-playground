@@ -4,8 +4,8 @@ from uuid import uuid4
 from fastapi import APIRouter, UploadFile, File, status, HTTPException
 from sqlalchemy.orm import Query
 
-from ..database.database import GetDb
-from ..database.models import DbUserFile
+from src.db import GetDb
+from src.models import DbUserFile
 from ..oauth2 import UserLogin
 from ..schemas import FileOut
 from ..utils.aws_s3 import upload_fileobj, create_presigned_url, delete_object
