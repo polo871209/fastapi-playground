@@ -1,22 +1,16 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
-from src.config import env
-
-engine = create_engine(env.SQLALCHEMY_DATABASE_URL, future=True)
-Session = sessionmaker(bind=engine, future=True)
+async_engine = create_async_engine('mysql+aiomysql://user:password@localhost/fastapi', future=True)
+AsyncSessionMaker = async_sessionmaker(async_engine, class_=AsyncSession, future=True)
 
 
-# Dependency
-def get_db():
-    db = Session()
-    try:
-        yield db
-    finally:
-        db.close()
+# Async Dependency
+async def get_db() -> AsyncSession:
+    async with AsyncSessionMaker() as session:
+        yield session
 
 
-GetDb = Annotated[Session, Depends(get_db)]
+GetDb = Annotated[AsyncSession, Depends(get_db)]
