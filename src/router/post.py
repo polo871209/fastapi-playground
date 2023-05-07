@@ -30,7 +30,6 @@ def create_post(user: UserLogin, db: GetDb, payload: PostCreate = Body()):
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
-    return new_post
 
 
 @router.get('/all', response_model=List[PostOut])
