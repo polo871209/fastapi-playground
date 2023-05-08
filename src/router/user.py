@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Body, status, HTTPException
+from sqlalchemy import update, select
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm.query import Query
 
@@ -14,19 +15,14 @@ router = APIRouter(
 )
 
 
-def check_user_exist(query: Query, user_id: int) -> None:
-    if not query.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'user with id {user_id} does not exist')
-
-
 @router.post('/', response_model=UserOut, status_code=status.HTTP_201_CREATED)
-def create_user(db: GetDb, payload: UserCreate = Body()):
+async def create_user(db: GetDb, payload: UserCreate = Body()):
     try:
         payload.password = get_password_hash(payload.password)
         new_user = DbUser(**payload.dict())
         db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
+        await db.commit()
+        await db.refresh(new_user)
     except DBAPIError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='email already exist')
 
@@ -34,18 +30,33 @@ def create_user(db: GetDb, payload: UserCreate = Body()):
 
 
 @router.get('/', response_model=UserOut)
-def get_current_user(user: UserLogin, db: GetDb):
-    return db.query(DbUser).filter(DbUser.id == user.id).first()
+async def get_current_user(user: UserLogin, db: GetDb):
+    user_stmt = select(DbUser).where(DbUser.id == user.id)
+    result = await db.execute(user_stmt)
+    current_user = result.scalar_one()
+
+    return current_user
 
 
 @router.put('/', response_model=UserOut, status_code=status.HTTP_202_ACCEPTED)
-def update_current_user(user: UserLogin, db: GetDb, payload: UserCreate = Body()):
-    updated_user = db.query(DbUser).where(DbUser.id == user.id)
-    payload.password = get_password_hash(payload.password)
-    updated_user.update(payload.dict(), synchronize_session=False)
-    db.commit()
+async def update_current_user(user: UserLogin, db: GetDb, payload: UserCreate = Body()):
+    try:
+        payload.password = get_password_hash(payload.password)
+        update_stmt = (
+            update(DbUser)
+            .where(DbUser.id == user.id)
+            .values(**payload.dict())
+        )
+        await db.execute(update_stmt)
+        await db.commit()
+    except DBAPIError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='email already exist')
 
-    return updated_user.first()
+    updated_user_stmt = select(DbUser).where(DbUser.id == user.id)
+    result = await db.execute(updated_user_stmt)
+    updated_user = result.scalar_one()
+
+    return updated_user
 
 # @router.delete('/', status_code=status.HTTP_204_NO_CONTENT)
 # def delete_current_user(user: UserLogin, db: GetDb) -> None:

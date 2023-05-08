@@ -45,31 +45,31 @@ class DbPost:
     # comments: Mapped[Optional[List['DbComment']]] = relationship(back_populates='post')
 
 
-# @mapper_registry.mapped
-# class DbPostLike:
-#     __tablename__ = 'posts_likes'
+@mapper_registry.mapped
+class DbPostLike:
+    __tablename__ = 'posts_likes'
+
+    user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
+    post_id: Mapped[int_primary_key] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))
 #
-#     user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
-#     post_id: Mapped[int_primary_key] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))
 #
-#
-# @mapper_registry.mapped
-# class DbComment:
-#     __tablename__ = 'comments'
-#
-#     id: Mapped[int_primary_key]
-#     comment: Mapped[str_100]
-#     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
-#     post_id: Mapped[int] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))
+@mapper_registry.mapped
+class DbComment:
+    __tablename__ = 'comments'
+
+    id: Mapped[int_primary_key]
+    comment: Mapped[str_100]
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
+    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))
 #
 #     owner: Mapped['DbUser'] = relationship(back_populates='comments')
 #     post: Mapped['DbPost'] = relationship(back_populates='comments')
 #
 #
-# @mapper_registry.mapped
-# class DbUserFile:
-#     __tablename__ = 'user_file'
-#
-#     user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
-#     file_name: Mapped[str_100] = mapped_column(primary_key=True)
-#     s3_key_name: Mapped[str_100]
+@mapper_registry.mapped
+class DbUserFile:
+    __tablename__ = 'user_file'
+
+    user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
+    file_name: Mapped[str_100] = mapped_column(primary_key=True)
+    s3_key_name: Mapped[str_100]
