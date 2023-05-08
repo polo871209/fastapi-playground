@@ -1,8 +1,7 @@
 from typing import Optional
 
-from fastapi import APIRouter, Body, status, HTTPException, Path
+from fastapi import APIRouter, Body, status, HTTPException, Path, Query
 from sqlalchemy import select, insert, update, delete
-from sqlalchemy.orm.query import Query
 
 from ..db import GetDb
 from ..models import DbPost
@@ -29,16 +28,16 @@ async def create_post(
     new_post_data["user_id"] = user.id
 
     # Insert the new post
-    stmt = insert(DbPost).values(**new_post_data)
-    await db.execute(stmt)
-    await db.commit()
+    post_stmt = insert(DbPost).values(**new_post_data)
+    db.execute(post_stmt)
 
     # Fetch the newly inserted post
-    stmt = select(DbPost).where(DbPost.user_id == user.id).order_by(DbPost.created_at.desc()).limit(1)
-    result = await db.execute(stmt)
-    new_post = result.scalar_one()
+    id_stmt = select(DbPost.id).where(DbPost.user_id == user.id).order_by(DbPost.created_at.desc()).limit(1)
+    result = await db.execute(id_stmt)
+    new_id = result.scalar_one()
 
-    return new_post
+    await db.commit()
+    return {'id': new_id, **new_post_data}
 
 
 @router.get('/all')
@@ -64,7 +63,7 @@ async def get_post(
     result = await db.execute(stmt)
     post = result.scalar_one_or_none()
 
-    await check_post_exist(post)
+    check_post_exist(post)
 
     return post
 
@@ -73,28 +72,32 @@ async def get_post(
 async def update_post(
         db: GetDb, user: UserLogin,
         post_id: int = Path(),
-        payload: PostCreate = Body()):
-    stmt = (
+        payload: PostCreate = Body()
+):
+    check_stmt = (
+        select(DbPost)
+        .where(DbPost.id == post_id, DbPost.user_id == user.id)
+    )
+    result = await db.execute(check_stmt)
+    post = result.scalar_one_or_none()
+    check_post_exist(post)
+
+    update_stmt = (
         update(DbPost)
         .where(DbPost.id == post_id, DbPost.user_id == user.id)
         .values(**payload.dict())
     )
-    await db.execute(stmt)
+    await db.execute(update_stmt)
     await db.commit()
 
-    stmt = select(DbPost).where(DbPost.id == post_id)
-    result = await db.execute(stmt)
-    post = result.scalar_one_or_none()
-
-    check_post_exist(post)
-
-    return post
+    return {**payload.dict()}
 
 
 @router.delete('/{post_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
         db: GetDb, user: UserLogin,
-        post_id: int = Path()) -> None:
+        post_id: int = Path()
+) -> None:
     """delete post by id"""
     # Check if post exists and if the user owns the post
     stmt = select(DbPost).where(DbPost.id == post_id, DbPost.user_id == user.id)

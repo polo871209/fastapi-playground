@@ -1,16 +1,19 @@
-from typing import Annotated, Optional, Type
+from typing import Annotated, Type, List
+from uuid import uuid4
 
 import uvicorn
-from fastapi import HTTPException, Depends, Body, status, FastAPI, Query, Path
+from fastapi import HTTPException, Depends, status, FastAPI, UploadFile
+from fastapi.params import File
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select, insert, update, column, text, delete
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
-from src.models import DbPost, DbUser, DbPostLike
+from src.models import DbUser, DbUserFile
 from src.oauth2 import create_access_token, UserLogin
-from src.schemas import PostCreate, UserOut, UserCreate, Like
-from src.utils.hash import verify_password, get_password_hash
+from src.router.file import check_file_exist
+from src.schemas import FileOut
+from src.utils.aws_s3 import upload_fileobj, create_presigned_url, delete_object
+from src.utils.hash import verify_password
 
 async_engine = create_async_engine('mysql+aiomysql://user:password@localhost/fastapi', future=True)
 AsyncSessionMaker = async_sessionmaker(async_engine, class_=AsyncSession, future=True)
@@ -50,175 +53,79 @@ async def login(db: GetDb, payload: OAuth2PasswordRequestForm = Depends()):
     return {'access_token': access_token, 'token_type': 'bearer'}
 
 
-# def check_post_exist(post):
-#     if not post:
-#         raise HTTPException(status_code=404, detail="Post not found")
-#
-#
-# @app.post('/', status_code=status.HTTP_201_CREATED)
-# async def create_post(
-#         db: GetDb, user: UserLogin,
-#         payload: PostCreate = Body()
-# ):
-#     new_post_data = payload.dict()
-#     new_post_data["user_id"] = user.id
-#
-#     # Insert the new post
-#     stmt = insert(DbPost).values(**new_post_data)
-#     await db.execute(stmt)
-#     await db.commit()
-#
-#     # Fetch the newly inserted post
-#     stmt = select(DbPost).where(DbPost.user_id == user.id).order_by(DbPost.created_at.desc()).limit(1)
-#     result = await db.execute(stmt)
-#     new_post = result.scalar_one()
-#
-#     return new_post
-#
-#
-# @app.get('/all')
-# async def get_all_posts(
-#         db: GetDb, user: UserLogin,
-#         limit: Optional[int] = Query(default=10, description='maximum amount of posts'),
-#         search: Optional[str] = Query(default='', description='search in title')
-# ):
-#     """get all posts"""
-#     stmt = select(DbPost).where(DbPost.title.contains(search)).limit(limit)
-#     result = await db.execute(stmt)
-#     posts = result.scalars().all()
-#     return posts
-#
-#
-# @app.get('/{post_id}')
-# async def get_post(
-#         db: GetDb, user: UserLogin,
-#         post_id: int = Path()
-# ):
-#     """get post by id"""
-#     stmt = select(DbPost).where(DbPost.id == post_id)
-#     result = await db.execute(stmt)
-#     post = result.scalar_one_or_none()
-#
-#     await check_post_exist(post)
-#
-#     return post
-#
-#
-# @app.put('/{post_id}', status_code=status.HTTP_202_ACCEPTED)
-# async def update_post(
-#         db: GetDb, user: UserLogin,
-#         post_id: int = Path(),
-#         payload: PostCreate = Body()):
-#     stmt = (
-#         update(DbPost)
-#         .where(DbPost.id == post_id, DbPost.user_id == user.id)
-#         .values(**payload.dict())
-#     )
-#     await db.execute(stmt)
-#     await db.commit()
-#
-#     stmt = select(DbPost).where(DbPost.id == post_id)
-#     result = await db.execute(stmt)
-#     post = result.scalar_one_or_none()
-#
-#     check_post_exist(post)
-#
-#     return post
-#
-#
-# @app.delete('/{post_id}', status_code=status.HTTP_204_NO_CONTENT)
-# async def delete_post(
-#         db: GetDb, user: UserLogin,
-#         post_id: int = Path()) -> None:
-#     """delete post by id"""
-#     # Check if post exists and if the user owns the post
-#     stmt = select(DbPost).where(DbPost.id == post_id, DbPost.user_id == user.id)
-#     result = await db.execute(stmt)
-#     post = result.scalar_one_or_none()
-#
-#     check_post_exist(post)
-#
-#     stmt = (
-#         delete(DbPost)
-#         .where(DbPost.id == post_id, DbPost.user_id == user.id)
-#     )
-#     await db.execute(stmt)
-#     await db.commit()
-
-
-# @app.post('/', response_model=UserOut, status_code=status.HTTP_201_CREATED)
-# async def create_user(db: GetDb, payload: UserCreate = Body()):
-#     try:
-#         payload.password = get_password_hash(payload.password)
-#         new_user = DbUser(**payload.dict())
-#         db.add(new_user)
-#         await db.commit()
-#         await db.refresh(new_user)
-#     except DBAPIError:
-#         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='email already exist')
-#
-#     return new_user
-#
-#
-# @app.get('/', response_model=UserOut)
-# async def get_current_user(user: UserLogin, db: GetDb):
-#     user_stmt = select(DbUser).where(DbUser.id == user.id)
-#     result = await db.execute(user_stmt)
-#     current_user = result.scalar_one()
-#
-#     return current_user
-#
-#
-# @app.put('/', response_model=UserOut, status_code=status.HTTP_202_ACCEPTED)
-# async def update_current_user(user: UserLogin, db: GetDb, payload: UserCreate = Body()):
-#     try:
-#         payload.password = get_password_hash(payload.password)
-#         update_stmt = (
-#             update(DbUser)
-#             .where(DbUser.id == user.id)
-#             .values(**payload.dict())
-#         )
-#         await db.execute(update_stmt)
-#         await db.commit()
-#     except DBAPIError:
-#         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='email already exist')
-#
-#     updated_user_stmt = select(DbUser).where(DbUser.id == user.id)
-#     result = await db.execute(updated_user_stmt)
-#     updated_user = result.scalar_one()
-#
-#     return updated_user
-
-
-@app.post('/{post_id}', status_code=status.HTTP_201_CREATED)
-async def like_post(
+@app.post('/', response_model=FileOut, status_code=status.HTTP_201_CREATED)
+async def upload_file(
         user: UserLogin, db: GetDb,
-        post_id: int = Path(),
-        like: bool = Query()
+        file: UploadFile = File()
 ):
-    # check post exist
-    post_stmt = select(DbPost).where(DbPost.id == post_id)
-    result = await db.execute(post_stmt)
-    post = result.scalar_one_or_none()
-    if not post:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f'post with id {post_id} does not exist')
-    if like:
-        try:
-            like_stmt = insert(DbPostLike).values(post_id=post_id, user_id=user.id)
-            await db.execute(like_stmt)
+    stmt = select(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file.filename)
+    db_file = await db.execute(stmt)
+    db_file = db_file.scalar_one_or_none()
+
+    if not db_file:
+        key = str(uuid4())
+        if upload_fileobj(file.file, key):
+            new_file = DbUserFile(user_id=user.id, file_name=file.filename, s3_key_name=key)
+            db.add(new_file)
             await db.commit()
-            return {'message': f'successfully like post {post_id}'}
-        except DBAPIError:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f'already like post {post_id}')
-    # if not like
-    unlike_stmt = (
-        delete(DbPostLike)
-        .where(DbPostLike.post_id == post_id, DbPostLike.user_id == user.id)
-    )
-    await db.execute(unlike_stmt)
-    await db.commit()
-    return {'message': f'successfully unlike post {post_id}'}
+            await db.refresh(new_file)
+            return new_file
+    elif upload_fileobj(file.file, db_file.s3_key_name):
+        return {'file_name': file.filename}
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='please try again')
+
+
+@app.get('/all', response_model=List[FileOut])
+async def list_all_files(
+        user: UserLogin, db: GetDb
+):
+    stmt = select(DbUserFile).where(DbUserFile.user_id == user.id)
+    result = await db.execute(stmt)
+    files = result.scalars().all()
+
+    check_file_exist(files)
+
+    return files
+
+
+@app.get('/{file_name}')
+async def get_file(
+        user: UserLogin, db: GetDb,
+        file_name: str
+):
+    """temporary link for file download"""
+    stmt = select(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file_name)
+    file = await db.execute(stmt)
+    file = file.scalar_one_or_none()
+
+    check_file_exist(file)
+
+    response = create_presigned_url(file.s3_key_name)
+    if response:
+        return response
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='please try again')
+
+
+@app.delete('/{file_name}', status_code=status.HTTP_204_NO_CONTENT)
+async def delete_file(
+        user: UserLogin, db: GetDb,
+        file_name: str
+):
+    stmt = select(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file_name)
+    file = await db.execute(stmt)
+    file = file.scalar_one_or_none()
+
+    check_file_exist(file)
+
+    if delete_object(file.s3_key_name):
+        delete_stmt = DbUserFile.__table__.delete().where(DbUserFile.user_id == user.id,
+                                                          DbUserFile.file_name == file_name)
+        await db.execute(delete_stmt)
+        await db.commit()
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='please try again')
 
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@ from typing import List
 from uuid import uuid4
 
 from fastapi import APIRouter, UploadFile, File, status, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Query
 
 from src.db import GetDb
@@ -21,21 +22,27 @@ def check_file_size():
     pass
 
 
-def check_file_exist(query: Query, file_name: str) -> None:
-    if not query.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'file {file_name} not found')
+def check_file_exist(file) -> None:
+    if not file:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='file not found')
 
 
 @router.post('/', response_model=FileOut, status_code=status.HTTP_201_CREATED)
-def upload_file(user: UserLogin, db: GetDb, file: UploadFile = File()):
-    db_file = db.query(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file.filename).first()
+async def upload_file(
+        user: UserLogin, db: GetDb,
+        file: UploadFile = File()
+):
+    stmt = select(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file.filename)
+    db_file = await db.execute(stmt)
+    db_file = db_file.scalar_one_or_none()
+
     if not db_file:
         key = str(uuid4())
         if upload_fileobj(file.file, key):
             new_file = DbUserFile(user_id=user.id, file_name=file.filename, s3_key_name=key)
             db.add(new_file)
-            db.commit()
-            db.refresh(new_file)
+            await db.commit()
+            await db.refresh(new_file)
             return new_file
     elif upload_fileobj(file.file, db_file.s3_key_name):
         return {'file_name': file.filename}
@@ -44,27 +51,52 @@ def upload_file(user: UserLogin, db: GetDb, file: UploadFile = File()):
 
 
 @router.get('/all', response_model=List[FileOut])
-def list_all_files(user: UserLogin, db: GetDb):
-    return db.query(DbUserFile).where(DbUserFile.user_id == user.id).all()
+async def list_all_files(
+        user: UserLogin, db: GetDb
+):
+    stmt = select(DbUserFile).where(DbUserFile.user_id == user.id)
+    result = await db.execute(stmt)
+    files = result.scalars().all()
+
+    check_file_exist(files)
+
+    return files
 
 
 @router.get('/{file_name}')
-def get_file(user: UserLogin, db: GetDb, file_name: str):
+async def get_file(
+        user: UserLogin, db: GetDb,
+        file_name: str
+):
     """temporary link for file download"""
-    file = db.query(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file_name)
-    check_file_exist(file, file_name)
-    if response := create_presigned_url(file.first().s3_key_name):
+    stmt = select(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file_name)
+    file = await db.execute(stmt)
+    file = file.scalar_one_or_none()
+
+    check_file_exist(file)
+
+    response = create_presigned_url(file.s3_key_name)
+    if response:
         return response
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='please try again')
 
 
-@router.delete('/{filename}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_file(user: UserLogin, db: GetDb, file_name: str):
-    file = db.query(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file_name)
-    check_file_exist(file, file_name)
-    if delete_object(file.first().s3_key_name):
-        file.delete(synchronize_session=False)
-        db.commit()
+@router.delete('/{file_name}', status_code=status.HTTP_204_NO_CONTENT)
+async def delete_file(
+        user: UserLogin, db: GetDb,
+        file_name: str
+):
+    stmt = select(DbUserFile).where(DbUserFile.user_id == user.id, DbUserFile.file_name == file_name)
+    file = await db.execute(stmt)
+    file = file.scalar_one_or_none()
 
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='please try again')
+    check_file_exist(file)
+
+    if delete_object(file.s3_key_name):
+        delete_stmt = DbUserFile.__table__.delete().where(DbUserFile.user_id == user.id,
+                                                          DbUserFile.file_name == file_name)
+        await db.execute(delete_stmt)
+        await db.commit()
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='please try again')

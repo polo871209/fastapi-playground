@@ -15,7 +15,7 @@ SECRET_KEY = env.SECRET_KEY
 ALGORITHM = env.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = env.ACCESS_TOKEN_EXPIRE_MINUTES
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/login')
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/login')
 
 
