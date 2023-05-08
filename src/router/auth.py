@@ -2,9 +2,10 @@ from typing import Type
 
 from fastapi import APIRouter, status, Depends, HTTPException
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+from sqlalchemy import select
 
-from src.db import GetDb
-from src.models import DbUser
+from ..db import GetDb
+from ..models import DbUser
 from ..oauth2 import create_access_token
 from ..schemas import TokenOut
 from ..utils.hash import verify_password
@@ -26,9 +27,13 @@ def check_password(plain_password: str, hashed_password: str) -> None:
 
 
 @router.post('/', response_model=TokenOut)
-def login(db: GetDb, payload: OAuth2PasswordRequestForm = Depends()):
-    user = db.query(DbUser).where(DbUser.email == payload.username).first()
+async def login(db: GetDb, payload: OAuth2PasswordRequestForm = Depends()):
+    stmt = select(DbUser).where(DbUser.email == payload.username)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+
     check_user_exist(user)
     check_password(payload.password, user.password)
+
     access_token = create_access_token({'user_id': user.id})
     return {'access_token': access_token, 'token_type': 'bearer'}
