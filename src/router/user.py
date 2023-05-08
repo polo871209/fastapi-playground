@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, status, HTTPException
-from sqlalchemy import update, select
+from sqlalchemy import update, select, cast, Integer
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm.query import Query
 
@@ -46,17 +46,11 @@ async def update_current_user(user: UserLogin, db: GetDb, payload: UserCreate = 
             update(DbUser)
             .where(DbUser.id == user.id)
             .values(**payload.dict())
-        )
-        await db.execute(update_stmt)
-        await db.commit()
+        ).returning(DbUser)
+        result = await db.execute(update_stmt)
+        return result.fetchone()[0].__dict__
     except DBAPIError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='email already exist')
-
-    updated_user_stmt = select(DbUser).where(DbUser.id == user.id)
-    result = await db.execute(updated_user_stmt)
-    updated_user = result.scalar_one()
-
-    return updated_user
 
 # @router.delete('/', status_code=status.HTTP_204_NO_CONTENT)
 # def delete_current_user(user: UserLogin, db: GetDb) -> None:

@@ -8,7 +8,8 @@ from sqlalchemy import select
 
 from .config import env
 from . import models
-from src.db import GetDb
+from .db import GetDb
+from .models import DbUser
 from .schemas import TokenData
 
 SECRET_KEY = env.SECRET_KEY
@@ -47,7 +48,7 @@ async def get_user(db: GetDb, token: str = Depends(oauth2_scheme)):
                                           headers={'WWW-Authenticate': 'Bearer'})
     token_data = verify_access_token(token, credentials_exception)
 
-    stmt = select(models.DbUser).where(models.DbUser.id == token_data.user_id)
+    stmt = select(DbUser).where(DbUser.id == int(token_data.user_id))
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
 

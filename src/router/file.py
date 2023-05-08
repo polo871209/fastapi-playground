@@ -37,7 +37,7 @@ async def upload_file(
     db_file = db_file.scalar_one_or_none()
 
     if not db_file:
-        key = str(uuid4())
+        key = uuid4().hex
         if upload_fileobj(file.file, key):
             new_file = DbUserFile(user_id=user.id, file_name=file.filename, s3_key_name=key)
             db.add(new_file)

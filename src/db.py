@@ -1,10 +1,10 @@
 from typing import Annotated
-
+from .config import env
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 async_engine = create_async_engine(
-    'mysql+aiomysql://user:password@localhost/fastapi'
+    env.SQLALCHEMY_DATABASE_URL
 )
 
 AsyncSessionMaker = async_sessionmaker(

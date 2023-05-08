@@ -20,10 +20,10 @@ create_time = Annotated[datetime, mapped_column(TIMESTAMP(timezone=True), server
 class DbUser:
     __tablename__ = 'users'
 
-    id: Mapped[int_primary_key]
-    email: Mapped[str_100_unique]
-    password: Mapped[str_100]
-    created_at: Mapped[create_time]
+    id: Mapped[int] = mapped_column(autoincrement=True, nullable=False, unique=True, primary_key=True)
+    email: Mapped[str] = mapped_column(String(49), nullable=False, unique=True)
+    password: Mapped[str] = mapped_column(String(69), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text('now()'))
 
     # posts: Mapped['DbPost'] = relationship(back_populates='owner')
     # comments: Mapped['DbComment'] = relationship(back_populates='owner')
@@ -33,12 +33,12 @@ class DbUser:
 class DbPost:
     __tablename__ = 'posts'
 
-    id: Mapped[int_primary_key]
+    id: Mapped[int] = mapped_column(autoincrement=True, nullable=False, unique=True, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
-    title: Mapped[str_100]
-    content: Mapped[str_100]
-    publish: Mapped[bool_default_true]
-    created_at: Mapped[create_time]
+    title: Mapped[str] = mapped_column(String(69), nullable=False)
+    content: Mapped[str] = mapped_column(String(69), nullable=False)
+    publish: Mapped[bool] = mapped_column(server_default=expression.true())
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text('now()'))
 
     # owner: Mapped['DbUser'] = relationship(back_populates='posts')
     # likes: Mapped[Optional[List['DbPostLike']]] = relationship()
@@ -49,27 +49,28 @@ class DbPost:
 class DbPostLike:
     __tablename__ = 'posts_likes'
 
-    user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
-    post_id: Mapped[int_primary_key] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))
-#
-#
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='cascade'), primary_key=True)
+    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id', ondelete='cascade'), primary_key=True)
+
+
 @mapper_registry.mapped
 class DbComment:
     __tablename__ = 'comments'
 
     id: Mapped[int_primary_key]
-    comment: Mapped[str_100]
+    comment: Mapped[str] = mapped_column(String(69))
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
     post_id: Mapped[int] = mapped_column(ForeignKey('posts.id', ondelete='cascade'))
-#
+
+
 #     owner: Mapped['DbUser'] = relationship(back_populates='comments')
 #     post: Mapped['DbPost'] = relationship(back_populates='comments')
-#
-#
+
+
 @mapper_registry.mapped
 class DbUserFile:
     __tablename__ = 'user_file'
 
-    user_id: Mapped[int_primary_key] = mapped_column(ForeignKey('users.id', ondelete='cascade'))
-    file_name: Mapped[str_100] = mapped_column(primary_key=True)
-    s3_key_name: Mapped[str_100]
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='cascade'), primary_key=True)
+    file_name: Mapped[str] = mapped_column(String(69), primary_key=True)
+    s3_key_name: Mapped[str] = mapped_column(String(34), primary_key=True)
